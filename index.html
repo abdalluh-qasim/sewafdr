@@ -1,45 +1,408 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>درجات الطلاب</title>
+    <title>نظام إدارة الطلاب</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #1e90ff;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #1e90ff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0077cc;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+        .tab button {
+            background-color: inherit;
+            float: right;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+        .close {
+            color: #aaa;
+            float: left;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: right;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
-  
-
     <div class="container">
-
-
-        <img src="icon/school_logo.jpg" alt="شعار المدرسة" class="school-logo">
-        <h1>الدرجات و إستمارة التقييم</h1>
-        <p>          : ادخل الكود في مربع البحث أدناه   </p>
-        
-        <div class="input-group">
-            <button id="searchButton">
-                <img src="icon/search.png" alt="بحث" class="icon"> بحث
-            </button>
-            <input type="text" id="codeInput" placeholder="أدخل الكود هنا">
+        <h1>نظام طلاب المتفوقين الثانية في الناصرية</h1>
+        <div class="tab">
+           
         </div>
 
+        <!-- واجهة تسجيل الدخول -->
+        <div id="login" class="tabcontent">
+            <h2>تسجيل الدخول</h2>
+            <input type="text" id="username" placeholder="اسم المستخدم">
+            <input type="password" id="password" placeholder="كلمة المرور">
+            <button onclick="login()">دخول</button>
+        </div>
 
- 
-        <div class="instructions">
-            <h3>تعليمات:</h3>
-            <ul>
+        <!-- واجهة الطالب -->
+        <div id="studentView" class="tabcontent">
+            <h2>معلومات الطالب</h2>
+            <div id="studentInfo"></div>
+            <button onclick="logout()">تسجيل الخروج</button>
+        </div>
 
-                <li> .  تاكد من ادخال الكود بشكل صحيح </li>
-                <li>   بعد ادخال الكود قم بالضغط على مربع "بحث" واذهب الى اسفل الصفحة وانتظر قليلا حتى اكتمال تحميل الدرجة </li>
-                <li> .  في حالة وجود مشكلة يرجى التواصل مع ادارة الموقع</li>
-
-            </ul>
+        <!-- واجهة المعلم -->
+        <div id="teacherView" class="tabcontent">
+            <h2>لوحة المعلم</h2>
+            <button onclick="showAddStudentForm()">إضافة طالب</button>
+            <button onclick="showEditStudentForm()">تعديل طالب</button>
+            <button onclick="viewClassReport()">عرض تقرير الصفوف</button>
+            <button onclick="logout()">تسجيل الخروج</button>
         </div>
     </div>
-</div>
-        <div id="result"></div>
-        <div id="message" class="message"></div>
+
+    <!-- نافذة إضافة طالب -->
+    <div id="addStudentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>إضافة طالب جديد</h2>
+            <input type="text" id="newName" placeholder="الاسم الكامل">
+            <input type="text" id="newUsername" placeholder="اسم المستخدم">
+            <input type="password" id="newPassword" placeholder="كلمة المرور">
+            <select id="classSelect">
+                <option value="الأول متوسط">الأول متوسط</option>
+                <option value="الثاني متوسط">الثاني متوسط</option>
+                <option value="الثالث متوسط">الثالث متوسط</option>
+                <option value="رابع إعدادي">رابع إعدادي</option>
+                <option value="خامس إعدادي">خامس إعدادي</option>
+                <option value="سادس إعدادي">سادس إعدادي</option>
+            </select>
+            <button onclick="saveNewStudent()">حفظ</button>
+        </div>
     </div>
-    <script src="script.js"></script>
+
+    <!-- نافذة تعديل طالب -->
+    <div id="editStudentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditModal()">&times;</span>
+            <h2>تعديل طالب</h2>
+            <input type="text" id="editUsername" placeholder="اسم المستخدم">
+            <button onclick="loadStudentData()">تحميل بيانات الطالب</button>
+            <div id="editStudentForm" style="display: none;">
+                <h3>تعديل الدرجات</h3>
+                <div id="editGradesInputs"></div>
+                <h3>إضافة ملاحظة</h3>
+                <input type="text" id="newNote" placeholder="اكتب ملاحظة">
+                <h3>تسجيل غياب</h3>
+                <input type="date" id="absenceDate">
+                <select id="absenceStatus">
+                    <option value="حاضر">حاضر</option>
+                    <option value="غائب">غائب</option>
+                </select>
+                <button onclick="saveStudentChanges()">حفظ التعديلات</button>
+                <button onclick="deleteStudent()" style="background-color: red;">حذف الطالب</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تقرير الصفوف -->
+    <div id="classReportModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeClassReportModal()">&times;</span>
+            <h2>تقرير الصفوف</h2>
+            <table>
+                <tr>
+                    <th>الصف</th>
+                    <th>عدد الطلاب</th>
+                    <th>المعدل العام</th>
+                </tr>
+                <tbody id="classReportTable"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let students = JSON.parse(localStorage.getItem('students')) || {};
+        const teacher = { username: "krm", password: "krm" };
+
+        const subjects = [
+            "الرياضيات",
+            "العربية",
+            "الإنجليزية",
+            "الرياضة الفنية",
+            "الكيمياء",
+            "الفيزياء",
+            "الأحياء",
+            "الاجتماعيات",
+            "الفرنسية",
+            "الحاسوب",
+            "الإسلامية"
+        ];
+
+        const classes = [
+            "الأول متوسط",
+            "الثاني متوسط",
+            "الثالث متوسط",
+            "رابع إعدادي",
+            "خامس إعدادي",
+            "سادس إعدادي"
+        ];
+
+        let currentStudent = null;
+
+        function openTab(evt, tabName) {
+            const tabcontent = document.getElementsByClassName("tabcontent");
+            for (let i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            const tablinks = document.getElementsByClassName("tablinks");
+            for (let i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        function login() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            if (username === teacher.username && password === teacher.password) {
+                openTeacherView();
+            } else if (students[username] && students[username].password === password) {
+                openStudentView(username);
+            } else {
+                alert("اسم المستخدم أو كلمة المرور غير صحيحة");
+            }
+        }
+
+        function openTeacherView() {
+            document.getElementById("teacherView").style.display = "block";
+            document.getElementById("login").style.display = "none";
+        }
+
+        function openStudentView(username) {
+            const student = students[username];
+            const average = calculateAverage(student.grades);
+            document.getElementById("studentInfo").innerHTML = `
+                <p>الاسم: ${student.name}</p>
+                <p>الصف: ${student.class}</p>
+                <h3>الدرجات</h3>
+                <table>
+                    <tr>
+                        <th>المادة</th>
+                        <th>الدرجة</th>
+                    </tr>
+                    ${Object.entries(student.grades).map(([subject, grade]) => `
+                        <tr>
+                            <td>${subject}</td>
+                            <td>${grade}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+                <p><strong>المعدل: ${average.toFixed(2)}</strong></p>
+            `;
+            document.getElementById("studentView").style.display = "block";
+            document.getElementById("login").style.display = "none";
+        }
+
+        function logout() {
+            document.getElementById("studentView").style.display = "none";
+            document.getElementById("teacherView").style.display = "none";
+            document.getElementById("login").style.display = "block";
+        }
+
+        function showAddStudentForm() {
+            document.getElementById("addStudentModal").style.display = "block";
+        }
+
+        function closeModal() {
+            document.getElementById("addStudentModal").style.display = "none";
+        }
+
+        function showEditStudentForm() {
+            document.getElementById("editStudentModal").style.display = "block";
+        }
+
+        function closeEditModal() {
+            document.getElementById("editStudentModal").style.display = "none";
+        }
+
+        function closeClassReportModal() {
+            document.getElementById("classReportModal").style.display = "none";
+        }
+
+        function saveNewStudent() {
+            const student = {
+                name: document.getElementById("newName").value,
+                username: document.getElementById("newUsername").value,
+                password: document.getElementById("newPassword").value,
+                class: document.getElementById("classSelect").value,
+                grades: Object.fromEntries(subjects.map(subject => [subject, 0])),
+                attendance: {},
+                notes: []
+            };
+            students[student.username] = student;
+            localStorage.setItem('students', JSON.stringify(students));
+            closeModal();
+            alert("تمت إضافة الطالب بنجاح");
+        }
+
+        function loadStudentData() {
+            const username = document.getElementById("editUsername").value;
+            if (students[username]) {
+                currentStudent = students[username];
+                document.getElementById("editStudentForm").style.display = "block";
+                document.getElementById("editGradesInputs").innerHTML = subjects.map(subject => `
+                    <label for="${subject}">${subject}:</label>
+                    <input type="number" id="${subject}" value="${currentStudent.grades[subject]}" min="0" max="100">
+                `).join('');
+            } else {
+                alert("الطالب غير موجود");
+            }
+        }
+
+        function saveStudentChanges() {
+            for (const subject of subjects) {
+                const grade = parseFloat(document.getElementById(subject).value);
+                if (!isNaN(grade)) {
+                    currentStudent.grades[subject] = grade;
+                }
+            }
+            const note = document.getElementById("newNote").value;
+            if (note) {
+                currentStudent.notes.push(note);
+            }
+            const absenceDate = document.getElementById("absenceDate").value;
+            const absenceStatus = document.getElementById("absenceStatus").value;
+            if (absenceDate) {
+                currentStudent.attendance[absenceDate] = absenceStatus;
+            }
+            localStorage.setItem('students', JSON.stringify(students));
+            alert("تم حفظ التعديلات");
+        }
+
+        function deleteStudent() {
+            if (confirm("هل أنت متأكد من حذف هذا الطالب؟")) {
+                delete students[currentStudent.username];
+                localStorage.setItem('students', JSON.stringify(students));
+                alert("تم حذف الطالب");
+                closeEditModal();
+            }
+        }
+
+        function viewClassReport() {
+            const report = classes.map(cls => {
+                const classStudents = Object.values(students).filter(student => student.class === cls);
+                const average = classStudents.length > 0 ? 
+                    classStudents.reduce((sum, student) => sum + calculateAverage(student.grades), 0) / classStudents.length : 0;
+                return {
+                    class: cls,
+                    count: classStudents.length,
+                    average: average.toFixed(2)
+                };
+            });
+            document.getElementById("classReportTable").innerHTML = report.map(r => `
+                <tr>
+                    <td>${r.class}</td>
+                    <td>${r.count}</td>
+                    <td>${r.average}</td>
+                </tr>
+            `).join('');
+            document.getElementById("classReportModal").style.display = "block";
+        }
+
+        function calculateAverage(grades) {
+            const values = Object.values(grades);
+            return values.length > 0 ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+        }
+
+        document.getElementById("login").style.display = "block";
+    </script>
 </body>
 </html>
